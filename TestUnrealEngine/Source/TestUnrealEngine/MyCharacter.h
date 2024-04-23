@@ -36,36 +36,39 @@ public:
 	void Yaw(float Value);
 
 	UFUNCTION()
-	void OnAttackMontageEnded(UAnimMontage* montage, bool blnterrupted);
+		void OnAttackMontageEnded(UAnimMontage* montage, bool blnterrupted);
 
 	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
 private:
 	UPROPERTY(VisibleAnywhere)
-	class	USpringArmComponent* SpringArm;
+		class	USpringArmComponent* SpringArm;
 
 	UPROPERTY(VisibleAnywhere)
-	class	UCameraComponent* Camera;
+		class	UCameraComponent* Camera;
 
 	UPROPERTY(VisibleAnywhere, Category = Pawn)
-	bool IsAttacking = false;
+		bool IsAttacking = false;
 
 	UPROPERTY()
-	class UMyAnimInstance* AnimInstance;
+		class UMyAnimInstance* AnimInstance;
 
 	UPROPERTY()
-	int32 AttackIndex = 0;
+		int32 AttackIndex = 0;
 
 public:
 	UPROPERTY()
-	float UpDownValue = 0;
+		float UpDownValue = 0;
 
 	UPROPERTY()
-	float LeftRightValue = 0;
+		float LeftRightValue = 0;
 
 	UPROPERTY(VisibleAnywhere)
-	UStaticMeshComponent* Weapon;
+		UStaticMeshComponent* Weapon;
 
 	UPROPERTY(VisibleAnywhere)
-	class UMyStatComponent* Stat;
+		class UMyStatComponent* Stat;
+
+	UPROPERTY(VisibleAnywhere)
+		class UWidgetComponent* HpBar;
 };
