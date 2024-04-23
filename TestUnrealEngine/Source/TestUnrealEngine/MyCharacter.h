@@ -19,6 +19,8 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	virtual void PostInitializeComponents() override;
+
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -27,6 +29,7 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	void Attack();
+	void ASttackCheck();
 
 	void UpDown(float Value);
 	void LeftRight(float Value);
@@ -35,19 +38,34 @@ public:
 	UFUNCTION()
 	void OnAttackMontageEnded(UAnimMontage* montage, bool blnterrupted);
 
+	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
+
 private:
 	UPROPERTY(VisibleAnywhere)
-		class	USpringArmComponent* SpringArm;
+	class	USpringArmComponent* SpringArm;
 
 	UPROPERTY(VisibleAnywhere)
-		class	UCameraComponent* Camera;
+	class	UCameraComponent* Camera;
 
 	UPROPERTY(VisibleAnywhere, Category = Pawn)
-		bool IsAttacking = false;
+	bool IsAttacking = false;
 
 	UPROPERTY()
-		class UMyAnimInstance* AnimInstance;
+	class UMyAnimInstance* AnimInstance;
 
 	UPROPERTY()
-		int32 AttackIndex = 0;
+	int32 AttackIndex = 0;
+
+public:
+	UPROPERTY()
+	float UpDownValue = 0;
+
+	UPROPERTY()
+	float LeftRightValue = 0;
+
+	UPROPERTY(VisibleAnywhere)
+	UStaticMeshComponent* Weapon;
+
+	UPROPERTY(VisibleAnywhere)
+	class UMyStatComponent* Stat;
 };

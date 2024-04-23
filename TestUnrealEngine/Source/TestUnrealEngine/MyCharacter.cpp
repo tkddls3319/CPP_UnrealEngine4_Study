@@ -4,6 +4,10 @@
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "MyAnimInstance.h"
+#include "DrawDebugHelpers.h"
+#include "MyWeapon.h"
+#include "MyStatComponent.h"
+
 // Sets default values
 AMyCharacter::AMyCharacter()
 {
@@ -29,6 +33,8 @@ AMyCharacter::AMyCharacter()
 	{
 		GetMesh()->SetSkeletalMesh(SM.Object);
 	}
+
+	Stat = CreateDefaultSubobject<UMyStatComponent>(TEXT("STAT"));
 }
 
 // Called when the game starts or when spawned
@@ -36,8 +42,29 @@ void AMyCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-    AnimInstance = Cast<UMyAnimInstance>(GetMesh()->GetAnimInstance());
-	AnimInstance->OnMontageEnded.AddDynamic(this, &AMyCharacter::OnAttackMontageEnded);
+	FName WeaponSocket(TEXT("hand_I_Socket"));
+
+	 auto CurrentWeapon = GetWorld()->SpawnActor<AMyWeapon>(FVector::ZeroVector, FRotator::ZeroRotator);
+
+	 if (CurrentWeapon)
+	 {
+	/*	 CurrentWeapon->AttachToComponent(GetMesh(),
+			 FAttachmentTransformRules::SnapToTargetNotIncludingScale,
+			 WeaponSocket);*/
+	 }
+}
+
+void AMyCharacter::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	AnimInstance = Cast<UMyAnimInstance>(GetMesh()->GetAnimInstance());
+
+	if (AnimInstance)
+	{
+		AnimInstance->OnMontageEnded.AddDynamic(this, &AMyCharacter::OnAttackMontageEnded);
+		AnimInstance->OnAttackHit.AddUObject(this, &AMyCharacter::ASttackCheck);
+	}
 }
 
 // Called every frame
@@ -68,14 +95,50 @@ void AMyCharacter::Attack()
 	AnimInstance->JumpToSection(AttackIndex);
 
 	AttackIndex = (AttackIndex + 1) % 3;
-	
+
 	IsAttacking = true;
+}
+
+void AMyCharacter::ASttackCheck()
+{
+	FHitResult HitResult;
+	FCollisionQueryParams Params(NAME_None, false, this);
+	float AttackRange = 100.f;
+	float AttackRadus = 50.f;
+
+ bool bResult =	GetWorld()->SweepSingleByChannel(
+		OUT HitResult,
+		GetActorLocation(), 
+		GetActorLocation() + GetActorForwardVector() * AttackRange,
+		FQuat::Identity, 
+		ECollisionChannel::ECC_GameTraceChannel2, 
+		FCollisionShape::MakeSphere(AttackRadus),
+		Params);
+
+ FVector Vec = GetActorForwardVector() * AttackRange;
+ FVector Center = GetActorLocation()+ Vec * 0.5f;
+ float HalfHeight = AttackRange * 0.5f + AttackRadus;
+
+ FQuat Rotation = FRotationMatrix::MakeFromZ(Vec).ToQuat();
+ FColor DrawColor;
+ if (bResult)
+	 DrawColor = FColor::Green;
+ else
+	 DrawColor == FColor::Red;
+
+ DrawDebugCapsule(GetWorld(), Center, HalfHeight, AttackRadus, Rotation, DrawColor, false, 2.f);
+
+ if (bResult && HitResult.Actor.IsValid()) {
+	 UE_LOG(LogTemp, Log, TEXT("Hit Actor : %s"), *HitResult.Actor->GetName());
+
+	 FDamageEvent DamageEvent;
+	 HitResult.Actor->TakeDamage(Stat->GetAttack(), DamageEvent, GetController(), this);
+ }
 }
 
 void AMyCharacter::UpDown(float Value)
 {
-	if (Value == 0.f)
-		return;
+	UpDownValue = Value;
 
 	//UE_LOG(LogTemp, Error, TEXT("UpDown %f"), Value);
 	AddMovementInput(GetActorForwardVector(), Value);
@@ -83,9 +146,7 @@ void AMyCharacter::UpDown(float Value)
 
 void AMyCharacter::LeftRight(float Value)
 {
-	if (Value == 0.f)
-		return;
-
+	LeftRightValue = Value;
 	//UE_LOG(LogTemp, Error, TEXT("LeftRight %f"), Value);
 	AddMovementInput(GetActorRightVector(), Value);
 }
@@ -97,4 +158,12 @@ void AMyCharacter::Yaw(float Value) {
 void AMyCharacter::OnAttackMontageEnded(UAnimMontage* montage, bool blnterrupted)
 {
 	IsAttacking = false;
+}
+
+float AMyCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	Stat->OnAttacked(DamageAmount);
+
+
+	return 0.0f;
 }
