@@ -184,6 +184,7 @@ void AMyCharacter::Yaw(float Value) {
 void AMyCharacter::OnAttackMontageEnded(UAnimMontage* montage, bool blnterrupted)
 {
 	IsAttacking = false;
+	OnAttackEnd.Broadcast();
 }
 
 float AMyCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
